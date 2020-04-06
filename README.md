@@ -4,11 +4,11 @@
 #### Architecture
 State management: Mimic *Scoped Model* using *Provider*   
 Data model: `CustomEvent`
+![img](https://i.imgur.com/IHIFuca.png)
 
 #### Extra contents:
 - Scroll to nearest-to-date event on arrow button press
 - Event item animations (slide / press trash bin to delete event)
-
 
 #### Learnt points:
 * _FutureBuilder is only used for building Widgets with **3** states only: `initial -> processing -> done`._ It can not rebuild itself after that (unless you're _overwriting_ the _future_ instance, or calling a async method in the _future_ param, but those are bad practices) If you want to do more with the snapshot data later, like deleting/modifying it & update UI, use _Builder_ or _StreamBuilder_ instead.
