@@ -1,5 +1,7 @@
 ### This is a refactored from [Device Calendar Plugin's example](https://pub.dev/packages/device_calendar) as a simple starter project to learn Flutter
-**_note: create/edit events with recurrence rule is not stable_**
+**_note: create/edit events with recurrence rule is not stable_**   
+![add](https://media.giphy.com/media/UrKU7XuV6NymIB30TU/giphy.gif)
+![delete](https://media.giphy.com/media/dWCih91YmemwIQkLVk/giphy.gif)
 
 #### Architecture
 State management: Mimic *Scoped Model* using *Provider*   
