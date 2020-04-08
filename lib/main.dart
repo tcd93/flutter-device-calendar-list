@@ -40,8 +40,8 @@ class RootWidget extends StatelessWidget {
                                 provider.calendars,
                                 provider.calendarNameIdMap,
                                 //TODO: input by week instead
-                                start: DateTime.now().add(Duration(days: -7)),
-                                end: DateTime.now().add(Duration(days: 7)),
+                                start: DateTime.now().add(Duration(days: -14)),
+                                end: DateTime.now().add(Duration(days: 14)),
                               ),
                               child: widget,
                             ),
@@ -64,7 +64,7 @@ class RootWidget extends StatelessWidget {
                                   {
                                     return MaterialPageRoute(
                                       builder: (context) =>
-                                          CalendarEventPage(args['event']),
+                                          CalendarEventPage(),
                                     );
                                   }
                                   break;

@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:collection';
 
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+
 import '../common/helpers.dart';
 import 'package:device_calendar/device_calendar.dart';
 import 'package:flutter/cupertino.dart';
@@ -30,15 +32,23 @@ mixin CalendarEventNotifier {
 class EventDataProvider with ChangeNotifier, CalendarEventNotifier {
   final UnmodifiableListView<Calendar> _calendars;
   final Map<String, String> _calendarNameIdMap;
+  /// This scroll controller creates a front/back layer fade in/out effect for a long list (blame google for that)
+  final ItemScrollController scrollController = ItemScrollController();
+  // mock test
+  final bool _persist = true;
 
   List<CustomEvent> events;
+  /// A **COPY** of current event instance in the [events] list
   CustomEvent currentEvent;
 
   EventDataProvider(this._calendars, this._calendarNameIdMap,
       {@required DateTime start, @required DateTime end}) {
     assert(_calendars != null);
     _retrieveCalendarEvents(_calendars, start, end)
-        .then((events) => setState((_) => this.events = events));
+        .then((events) {
+          print('%% Events Loaded %%');
+          if(events.length > 0) setState((_) => this.events = events);
+        });
   }
 
   @override
@@ -47,33 +57,62 @@ class EventDataProvider with ChangeNotifier, CalendarEventNotifier {
     super.dispose();
   }
 
-  /// Remove the [event] from [events] list.
-  ///
-  /// Set [persist] false for mock test
-  Future<bool> deleteEvent(CustomEvent event, [bool persist = true]) async {
-    if (!persist) {
+  /// Remove the [event] from [events] list. Return error message if fails.
+  Future<String> deleteEvent(CustomEvent event) async {
+    if (!_persist) {
       events.remove(event);
-      return true;
+      return '';
     } else {
       var result = await DeviceCalendarPlugin()
           .deleteEvent(_calendarNameIdMap[event.calendarName], event.eventId);
       if (result.isSuccess && result.data) {
         events.remove(event);
-        return true;
+        return '';
+      } else {
+        return result.errorMessages.join(' | ');
       }
     }
-    return false;
   }
 
-  ///add new (non-dupplicated) event to the [events] list
-  void addEvent(CustomEvent event) {
+  /// Add new (non-dupplicated) event to the [events] list. Return error message if fails.
+  Future<String> addEvent(CustomEvent event) async {
     //find the closest event (compared by start date) in the event list
     final dateTime = event.start;
     final int index =
         (events.indexWhere((c) => c.start.compareTo(dateTime) <= 0) < 0)
             ? events.length
             : events.indexWhere((c) => c.start.compareTo(dateTime) <= 0);
-    events.insert(index, event);
+    
+    if (!_persist) {
+      events.insert(index, event);
+      return '';
+    }
+    else {
+      var result = await DeviceCalendarPlugin().createOrUpdateEvent(event);
+      if (result.isSuccess) {
+        events.insert(index, event);
+        return '';
+      } else {
+        return result.errorMessages.join(' | ');
+      }
+    }
+  }
+
+  /// Update event of the [events] list. Return error message if fails.
+  Future<String> updateEvent(CustomEvent event) async {
+    if (!_persist) {
+      events[events.indexOf(event)] = event;
+      return '';
+    }
+    else {
+      var result = await DeviceCalendarPlugin().createOrUpdateEvent(event);
+      if (result.isSuccess) {
+        events[events.indexOf(event)] = event;
+        return '';
+      } else {
+        return result.errorMessages.join(' | ');
+      }
+    }
   }
 
   /// Update UI

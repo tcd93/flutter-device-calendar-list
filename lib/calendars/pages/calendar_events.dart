@@ -9,87 +9,27 @@ import '../custom_event.dart';
 import 'components/event_item.dart';
 
 /// Display a list of weekly events.
-///
-/// [CalendarEventsPage] is made as Stateful widget is to prevent unnecessary rebuilds
-/// of the entire ListView after going into [CalendarEventPage] (even if nothing is changed).
-class CalendarEventsPage extends StatefulWidget {
-  @override
-  _CalendarEventsState createState() => _CalendarEventsState();
-}
-
-class _CalendarEventsState extends State<CalendarEventsPage> {
-  /// This scroll controller creates a front/back layer fade in/out effect for a long list (blame google for that)
-  final ItemScrollController scrollController = ItemScrollController();
-
-  CalendarDataProvider calendarProvider;
-  EventDataProvider eventProvider;
-
-  @override
-  void initState() {
-    calendarProvider =
-        Provider.of<CalendarDataProvider>(context, listen: false);
-    super.initState();
-  }
-
-  @override
-  void didChangeDependencies() {
-    eventProvider = Provider.of<EventDataProvider>(context);
-    super.didChangeDependencies();
-  }
-
+class CalendarEventsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // print('>>>> Building Events List Page, length: ${eventProvider.events?.length}');
-
+    print('>>>> Building outer scaffold <<<<');
     return Scaffold(
       appBar: AppBar(title: Text('Calendar Events')),
       body: Builder(
-        builder: (context) => eventProvider.events == null
-            ? const Center(child: CircularProgressIndicator())
-            : eventProvider.events.length == 0
-                ? const Center(child: Text('No data'))
-                : _buildPositionedList(),
+        builder: (context) => _PositionedList(),
       ),
       floatingActionButton: _FloatingButtons(
-          onQuickScrollPress: () => _focusEventOn(DateTime.now()),
-        ),
+        onQuickScrollPress: () {
+          _focusEventOn(DateTime.now(), context);
+        },
+      ),
     );
   }
 
-  /// Build a [ScrollablePositionedList] of event items
-  ScrollablePositionedList _buildPositionedList() =>
-      ScrollablePositionedList.builder(
-          itemCount: eventProvider.events.length,
-          itemBuilder: (BuildContext context, int index) => EventItem(
-                calendarEvent: eventProvider.events[index],
-                key: ObjectKey(eventProvider.events[index]),
-                onDelete: (CustomEvent event, bool isConfirmed) async {
-                  if (isConfirmed) {
-                    var result = await eventProvider.deleteEvent(
-                        event, true /*set 2nd param false for mock testing*/);
-                    if (result) {
-                      eventProvider.setState((_) {});
-                    } else {
-                      Scaffold.of(context).showSnackBar(const SnackBar(
-                        content: Text(
-                            'Oops, we ran into an issue deleting the event'),
-                        backgroundColor: Colors.red,
-                        duration: Duration(seconds: 5),
-                      ));
-                    }
-                  }
-                },
-                onTapped: (CustomEvent event) {
-                  Navigator.pushNamed(context, AppRoutes.calendarEvent,
-                      arguments: {
-                        'event': event,
-                      });
-                },
-              ),
-          itemScrollController: scrollController);
-
   /// Find the event closest the provided date then scroll to that position
-  void _focusEventOn(DateTime dateTime) {
+  void _focusEventOn(DateTime dateTime, BuildContext context) {
+    final eventProvider = Provider.of<EventDataProvider>(context, listen: false);
+
     if (eventProvider.events == null || eventProvider.events.length == 0)
       return;
     final int _startIndex = (eventProvider.events
@@ -100,10 +40,60 @@ class _CalendarEventsState extends State<CalendarEventsPage> {
                 .indexWhere((c) => c.start.compareTo(dateTime) <= 0) -
             1;
 
-    scrollController.scrollTo(
+    eventProvider.scrollController.scrollTo(
         index: _startIndex,
         duration: Duration(seconds: (_startIndex / 6).ceil()),
         curve: Curves.fastLinearToSlowEaseIn);
+  }
+}
+
+/// Build a [ScrollablePositionedList] of event items
+class _PositionedList extends StatelessWidget {
+  const _PositionedList();
+
+  @override
+  Widget build(BuildContext context) {
+    final eventProvider = Provider.of<EventDataProvider>(context);
+
+    if (eventProvider.events == null)
+      return Center(child: CircularProgressIndicator());
+    if (eventProvider.events?.length ==0)
+      return Center(child: Text('No data'));
+    else {
+      print('>>>>>>>>>>>>> Building positioned list <<<<<<<<<<<<<');
+      print('');
+
+      final scrollController = eventProvider.scrollController;
+
+      return ScrollablePositionedList.builder(
+        itemCount: eventProvider.events.length,
+        itemBuilder: (BuildContext context, int index) => EventItem(
+              event: eventProvider.events[index],
+              key: ObjectKey(eventProvider.events[index]),
+              onDelete: (CustomEvent event, bool isConfirmed) async {
+                if (isConfirmed) {
+                  var error = await eventProvider.deleteEvent(event);
+                  if (error.isEmpty) {
+                    eventProvider.setState((_) {});
+                  } else {
+                    // TODO: make a global helper function
+                    Scaffold.of(context).showSnackBar(SnackBar(
+                      content: Text(error),
+                      backgroundColor: Colors.red,
+                      duration: Duration(seconds: 5),
+                    ));
+                  }
+                }
+              },
+              onTapped: (CustomEvent event) {
+                final eventProvider = Provider.of<EventDataProvider>(context, listen: false);
+                // provide a deep copy instead of reference to prevent direct modifications
+                eventProvider.currentEvent = CustomEvent.clone(event);
+                Navigator.pushNamed(context, AppRoutes.calendarEvent);
+              },
+            ),
+        itemScrollController: scrollController);
+    }
   }
 }
 
@@ -116,25 +106,22 @@ class _FloatingButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<CalendarDataProvider>(context, listen: false);
-
     return Column(
       verticalDirection: VerticalDirection.up,
       children: <Widget>[
         FloatingActionButton(
           key: Key('addEventButton'),
           heroTag: null,
-          onPressed: () {
+          onPressed: () { 
+            final provider = Provider.of<CalendarDataProvider>(context, listen: false);
             final eventProvider = Provider.of<EventDataProvider>(context, listen: false);
             print('>>>> Creating new event with index ${eventProvider.events.length}');
-            Navigator.pushNamed(context, AppRoutes.calendarEvent,
-                arguments: {
-                  'event': CustomEvent.initDefault(
-                      calendarId: provider.calendarNameIdMap.values.first,
-                      calendarName: provider.calendarNameIdMap.keys.first,
-                      index: eventProvider.events.length,
-                    )
-                });
+            eventProvider.currentEvent = CustomEvent.initDefault(
+                calendarId: provider.calendarNameIdMap.values.first,
+                calendarName: provider.calendarNameIdMap.keys.first,
+                index: eventProvider.events.length,
+              );
+            Navigator.pushNamed(context, AppRoutes.calendarEvent);
           },
           child: Icon(Icons.add),
           tooltip: 'Add new event',

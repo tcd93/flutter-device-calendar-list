@@ -1,6 +1,5 @@
 import 'package:device_calendar/device_calendar.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:tep/calendars/pages/calendar_event.dart';
 
 enum RecurrenceRuleEndType { Indefinite, MaxOccurrences, SpecifiedEndDate }
 
@@ -26,19 +25,15 @@ class CustomEvent extends Event {
   /// The unique id of each event in the entire phone
   String get eventId => super.eventId;
 
-  bool _isRecurringEvent;
+  // bool _isRecurringEvent;
 
   CustomRecurrenceRule _recurrenceRule;
   CustomRecurrenceRule get recurrenceRule => _recurrenceRule;
   set recurrenceRule(RecurrenceRule value) {
-    _recurrenceRule = CustomRecurrenceRule(value);
-  }
-
-  /// the "Is recurring?" check box in [CalendarEventPage]
-  bool get isRecurringEvent => _isRecurringEvent ?? (super.recurrenceRule != null);
-  set isRecurringEvent(bool value) {
-    _isRecurringEvent = value;
-    _recurrenceRule = value ? defaultRecurrenceRule() : null;
+    if (value != null)
+      _recurrenceRule = CustomRecurrenceRule(value);
+    else 
+      _recurrenceRule = null;
   }
 
   CustomEvent(Event event, {@required this.index, this.calendarName})
@@ -55,6 +50,9 @@ class CustomEvent extends Event {
       _recurrenceRule = CustomRecurrenceRule(super.recurrenceRule);
   }
 
+  CustomEvent.clone(CustomEvent event) 
+    : this(event, index: event.index, calendarName: event.calendarName);
+
   static CustomEvent initDefault(
           {String calendarId, String calendarName, int index}) =>
       CustomEvent(
@@ -67,8 +65,8 @@ class CustomEvent extends Event {
         index: index,
       );
 
-  static CustomRecurrenceRule defaultRecurrenceRule() =>
-      CustomRecurrenceRule(RecurrenceRule(
+  static RecurrenceRule defaultRecurrenceRule() =>
+      RecurrenceRule(
         RecurrenceFrequency.Daily,
         monthOfYear: MonthOfYear.January,
         // dayOfMonth: 1,
@@ -76,7 +74,7 @@ class CustomEvent extends Event {
         weekOfMonth: WeekNumber.First,
         // endDate: DateTime.now().add(Duration(hours: 1)),
         interval: 1,
-      ));
+      );
 }
 
 class CustomRecurrenceRule extends RecurrenceRule {

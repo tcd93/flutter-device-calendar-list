@@ -1,1 +1,0 @@
-`components` folder is for rendering sub components of widgets under `pages` folder

@@ -9,17 +9,16 @@ import '../../custom_event.dart';
 /// 
 /// made stateful to contain animations
 class EventItem extends StatefulWidget {
-  final CustomEvent _calendarEvent;
-
+  final CustomEvent _event;
   final Function(CustomEvent) _onTapped;
   final Function(CustomEvent, bool) _onDelete;
 
-  EventItem(
-      {@required CustomEvent calendarEvent,
+  const EventItem(
+      {@required CustomEvent event,
       Key key,
       Function(CustomEvent, bool) onDelete,
       Function(CustomEvent) onTapped})
-      : _calendarEvent = calendarEvent,
+      : _event = event,
         _onDelete = onDelete,
         _onTapped = onTapped,
         super(key: key);
@@ -77,20 +76,25 @@ class _EventItemState extends State<EventItem> with TickerProviderStateMixin {
   }
 
   @override
-  Widget build(BuildContext context) => Dismissible(
-        key: ObjectKey(widget._calendarEvent),
+  Widget build(BuildContext context) {
+    return Dismissible(
+        key: ObjectKey(widget._event),
         confirmDismiss: (_) => _showDialog(context),
-        background: const Card(color: Colors.redAccent),
+        background: const Card(
+          color: Colors.blueGrey,
+          elevation: 10.0,
+          margin: EdgeInsets.symmetric(vertical: 24.0),
+        ),
         onDismissed: (_) {
           if (widget._onDelete != null)
-            widget._onDelete(widget._calendarEvent, true);
+            widget._onDelete(widget._event, true);
         },
         child: _SizeAnimator(
           sizeAnimation: _sizeAnimation,
           child: _SlideAnimator(
             slideAnimation: _offsetAnimation,
             child: _Content(
-              widget._calendarEvent,
+              widget._event,
               onTapped: widget._onTapped,
               onDelete: (result) {
                 // runs the two animations in order
@@ -100,13 +104,14 @@ class _EventItemState extends State<EventItem> with TickerProviderStateMixin {
                     _sizeAnimationController.forward().orCancel.whenComplete(() {
                       _offsetAnimationController.dispose();
                       _sizeAnimationController.dispose();
-                      return widget._onDelete(widget._calendarEvent, result);
+                      return widget._onDelete(widget._event, result);
                     }));
               },
             ),
           ),
         ),
       );
+  }
 }
 
 class _SizeAnimator extends AnimatedWidget {
