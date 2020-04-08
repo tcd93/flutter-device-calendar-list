@@ -9,7 +9,7 @@ Data model: `CustomEvent`
 
 #### Extra contents:
 - Scroll to nearest-to-date event on arrow button press
-- Event item animations (slide / press trash bin to delete event)
+- Event item animations (slide / press trash bin to delete event)   
 _note: create/edit events with recurrence rule is not stable_
 
 #### Best practices:
