@@ -1,4 +1,4 @@
-### This is a refactored from [Device Calendar Plugin's example](https://pub.dev/packages/device_calendar) as a simple starter project to learn Flutter
+_Example codes (with additional features) of Flutter **[device calendar plugin](https://pub.dev/packages/device_calendar)**, display a list of events & allow interacting with the device's calendar_
 ![add](https://media.giphy.com/media/UrKU7XuV6NymIB30TU/giphy.gif)
 ![delete](https://media.giphy.com/media/dWCih91YmemwIQkLVk/giphy.gif)
 
